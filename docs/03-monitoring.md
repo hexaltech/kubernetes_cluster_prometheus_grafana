@@ -17,15 +17,15 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 ```
 
-## 3. Installer Prometheus + Grafana
+## 3. Installer Prometheus + Grafana dans le namespace monitoring
 
-Créer un namespace pour le monitoring :
+Créer le namespace monitoring si nécessaire :
 
 ```bash
 kubectl create namespace monitoring
 ```
 
-Installer kube-prometheus-stack dans ce namespace :
+Installer kube-prometheus-stack :
 
 ```bash
 helm install kube-prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
@@ -39,19 +39,12 @@ kubectl get pods -n monitoring
 
 ## 4. Exposer Grafana via MetalLB
 
-Modifier le service Grafana pour qu’il utilise LoadBalancer :
-
 ```bash
 kubectl patch svc kube-prometheus-grafana -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
-```
-
-Vérifie l’IP attribuée par MetalLB :
-
-```bash
 kubectl get svc -n monitoring
 ```
 
-* La colonne EXTERNAL-IP doit afficher une IP du pool MetalLB.
+* La colonne **EXTERNAL-IP** doit afficher une IP du pool MetalLB.
 
 ## 5. Accéder à Grafana
 
@@ -61,7 +54,7 @@ Récupérer le mot de passe admin :
 kubectl get secret kube-prometheus-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 --decode
 ```
 
-Ouvre dans ton navigateur l’IP externe attribuée par MetalLB, par exemple :
+Ouvre ton navigateur à l’IP externe attribuée par MetalLB, par exemple :
 
 ```
 http://192.168.1.200
