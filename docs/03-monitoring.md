@@ -57,7 +57,7 @@ kubectl get secret kube-prometheus-grafana -n monitoring -o jsonpath="{.data.adm
 Ouvre ton navigateur à l’IP externe attribuée par MetalLB, par exemple :
 
 ```
-http://192.168.1.200
+http://192.168.1.2xx (202 par exemple)
 ```
 
 Login par défaut :
