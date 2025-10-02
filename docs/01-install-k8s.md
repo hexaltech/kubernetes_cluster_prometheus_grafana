@@ -6,8 +6,26 @@
 
 ```bash
 apt update && apt upgrade -y
-apt install -y curl gnupg lsb-release vim git containerd
+apt install -y curl gnupg lsb-release vim git containerd nano
 ```
+
+### Configuration containerd
+
+```bash
+mkdir -p /etc/containerd
+containerd config default > /etc/containerd/config.toml
+
+# Corriger l'image sandbox pour kubeadm (évite le warning pause:3.6)
+sed -i 's|sandbox_image = "registry.k8s.io/pause:3.6"|sandbox_image = "registry.k8s.io/pause:3.9"|' /etc/containerd/config.toml
+
+# Activer systemd cgroup
+sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+systemctl restart containerd
+systemctl enable containerd
+```
+
+---
 
 ## 2. Installation de Kubernetes
 
@@ -20,6 +38,8 @@ apt update
 apt install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 ```
+
+---
 
 ## 3. Initialisation du cluster
 
@@ -40,6 +60,8 @@ cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
+---
+
 ## 4. Installation du réseau CNI (Calico)
 
 👑 **Sur le master uniquement** :
@@ -47,6 +69,8 @@ chown $(id -u):$(id -g) $HOME/.kube/config
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/calico.yaml
 ```
+
+---
 
 ## 5. Ajout des workers
 
