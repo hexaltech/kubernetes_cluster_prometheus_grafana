@@ -98,3 +98,9 @@ kubeadm join 192.168.1.100:6443 --token <TOKEN> --discovery-token-ca-cert-hash s
 
 > 🔹 Astuce : Si le token expire ou si tu as besoin d’une nouvelle commande, refais la commande sur le master :
 > `kubeadm token create --print-join-command`
+
+Sur le master, exécute :
+
+```bash
+kubectl get nodes
+```
