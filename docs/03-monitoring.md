@@ -1,33 +1,73 @@
 # Monitoring avec Prometheus + Grafana
 
-## 1. Ajouter Helm
+## 1. Installer Helm
 
 🖥️ **Sur le master** :
 
 ```bash
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
 ```
 
-## 2. Installer Prometheus + Grafana
+## 2. Ajouter les repos Helm
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
-
-helm install kube-prometheus prometheus-community/kube-prometheus-stack
 ```
 
-## 3. Accéder à Grafana
+## 3. Installer Prometheus + Grafana
+
+Créer un namespace pour le monitoring :
+
+```bash
+kubectl create namespace monitoring
+```
+
+Installer kube-prometheus-stack dans ce namespace :
+
+```bash
+helm install kube-prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
+```
+
+Vérifie que tous les pods sont `Running` :
+
+```bash
+kubectl get pods -n monitoring
+```
+
+## 4. Exposer Grafana via MetalLB
+
+Modifier le service Grafana pour qu’il utilise LoadBalancer :
+
+```bash
+kubectl patch svc kube-prometheus-grafana -n monitoring -p '{"spec": {"type": "LoadBalancer"}}'
+```
+
+Vérifie l’IP attribuée par MetalLB :
+
+```bash
+kubectl get svc -n monitoring
+```
+
+* La colonne EXTERNAL-IP doit afficher une IP du pool MetalLB.
+
+## 5. Accéder à Grafana
 
 Récupérer le mot de passe admin :
 
 ```bash
-kubectl get secret kube-prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+kubectl get secret kube-prometheus-grafana -n monitoring -o jsonpath="{.data.admin-password}" | base64 --decode
 ```
 
-Port-forward :
+Ouvre dans ton navigateur l’IP externe attribuée par MetalLB, par exemple :
 
-```bash
-kubectl port-forward svc/kube-prometheus-grafana 3000:80
 ```
+http://192.168.1.200
+```
+
+Login par défaut :
+
+* user : admin
+* password : récupéré ci-dessus
