@@ -74,12 +74,27 @@ kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/
 
 ## 5. Ajout des workers
 
-⚙️ **Sur chaque worker** :
+👑 **Sur le master uniquement** :
 
-Exécuter la commande join donnée par le master :
+Pour obtenir la commande à exécuter sur chaque worker, génère-la avec :
 
 ```bash
-kubeadm join <MASTER_IP>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+kubeadm token create --print-join-command
 ```
 
-(Si besoin, régénérer le token sur le master : `kubeadm token create --print-join-command`).
+Cela te donnera une commande du type :
+
+```bash
+kubeadm join 192.168.1.100:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+```
+
+⚙️ **Sur chaque worker** :
+
+Exécute exactement la commande générée par le master. Par exemple :
+
+```bash
+kubeadm join 192.168.1.100:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+```
+
+> 🔹 Astuce : Si le token expire ou si tu as besoin d’une nouvelle commande, refais la commande sur le master :
+> `kubeadm token create --print-join-command`
