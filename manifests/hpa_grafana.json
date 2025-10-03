@@ -1,0 +1,127 @@
+{
+  "title": "HPA - php-apache (Dashboard Complet)",
+  "uid": "hpa-php-apache-full",
+  "schemaVersion": 36,
+  "version": 2,
+  "timezone": "browser",
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "bargauge",
+      "title": "Replicas actuels (HPA view)",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+      "id": 1,
+      "targets": [
+        {
+          "expr": "kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=\"php-apache\",namespace=\"default\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "max": 10,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 3, "color": "orange"},
+              {"value": 7, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Replicas désirés (HPA)",
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+      "id": 2,
+      "targets": [
+        {
+          "expr": "kube_horizontalpodautoscaler_status_desired_replicas{horizontalpodautoscaler=\"php-apache\",namespace=\"default\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "max": 10,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"value": 0, "color": "red"},
+              {"value": 3, "color": "orange"},
+              {"value": 7, "color": "green"}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU par pod (cores)",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "id": 3,
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=\"default\",pod=~\"php-apache.*\",container!=\"\"}[2m])",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "cores"}
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU total (php-apache) + HPA target",
+      "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
+      "id": 4,
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"default\",pod=~\"php-apache.*\",container!=\"\"}[2m]))",
+          "refId": "A",
+          "legendFormat": "cpu_total_cores"
+        },
+        {
+          "expr": "kube_horizontalpodautoscaler_status_target_metric{horizontalpodautoscaler=\"php-apache\",namespace=\"default\"}",
+          "refId": "B",
+          "legendFormat": "HPA-target-per-pod"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "cores"}
+      }
+    },
+    {
+      "type": "stat",
+      "title": "HPA ratio (actuel / désiré)",
+      "gridPos": {"x": 0, "y": 20, "w": 6, "h": 4},
+      "id": 5,
+      "targets": [
+        {
+          "expr": "kube_horizontalpodautoscaler_status_current_replicas{horizontalpodautoscaler=\"php-apache\",namespace=\"default\"} / kube_horizontalpodautoscaler_status_desired_replicas{horizontalpodautoscaler=\"php-apache\",namespace=\"default\"}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs":["lastNotNull"],"values":true},
+        "colorMode": "value",
+        "graphMode": "area",
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {"value": 0, "color": "red"},
+            {"value": 0.7, "color": "orange"},
+            {"value": 1, "color": "green"}
+          ]
+        }
+      }
+    }
+  ],
+  "annotations": {"list": []},
+  "templating": {"list": []}
+}
