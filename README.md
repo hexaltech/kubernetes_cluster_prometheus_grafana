@@ -2,11 +2,11 @@
 
 ## 📌 Description
 Ce projet présente un déploiement complet d’un **cluster Kubernetes** incluant :  
-- **Installation du cluster** (master + workers)  
-- **Monitoring** avec **Prometheus** et **Grafana**  
-- **Metrics Server** pour la collecte des métriques Kubernetes  
-- **Autoscaling (HPA)** sur une application PHP-Apache  
-- **Load Balancing** avec **MetalLB**  
+1. **Installation du cluster** (master + workers)  
+2. **Load Balancing** avec **MetalLB**  
+3. **Metrics Server** pour la collecte des métriques Kubernetes  
+4. **Monitoring** avec **Prometheus** et **Grafana**  
+5. **Autoscaling (HPA)** sur une application PHP-Apache  
 
 L’objectif est de mettre en place une plateforme de monitoring et d’observation complète, capable d’autoscaler dynamiquement en fonction des ressources consommées.
 
@@ -66,7 +66,15 @@ kubectl apply -f manifests/metallb-config.yaml
 
 ---
 
-### 3. Déployer le monitoring
+### 3. Installer Metrics Server
+```bash
+kubectl apply -f <fichiers-metrics-server>
+```
+(voir [`docs/04-metrics-server.md`](docs/04-metrics-server.md))
+
+---
+
+### 4. Déployer le monitoring
 Suivre la documentation : [`docs/03-monitoring.md`](docs/03-monitoring.md)  
 
 Cela installe **Prometheus** et **Grafana**.  
@@ -74,14 +82,6 @@ Cela installe **Prometheus** et **Grafana**.
 Par défaut :  
 - Grafana est exposé sur le **LoadBalancer** défini par MetalLB  
 - Identifiants par défaut : `admin / admin` (changer immédiatement)
-
----
-
-### 4. Installer Metrics Server
-```bash
-kubectl apply -f <fichiers-metrics-server>
-```
-(voir [`docs/04-metrics-server.md`](docs/04-metrics-server.md))
 
 ---
 
