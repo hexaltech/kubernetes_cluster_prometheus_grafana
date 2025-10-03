@@ -1,50 +1,116 @@
-# 🚀 Kubernetes Lab sur Proxmox + Debian 12
+# Kubernetes Cluster avec Prometheus, Grafana & Autoscaling
 
-Ce dépôt contient un guide et des fichiers de configuration pour monter un cluster Kubernetes sur Proxmox (3 VM Debian 12) avec :
-- 1 master
-- 2 workers
-- CNI Calico
-- LoadBalancer MetalLB
-- Monitoring (Prometheus + Grafana via Helm)
-- Metrics Server
+## 📌 Description
+Ce projet présente un déploiement complet d’un **cluster Kubernetes** incluant :  
+- **Installation du cluster** (master + workers)  
+- **Monitoring** avec **Prometheus** et **Grafana**  
+- **Metrics Server** pour la collecte des métriques Kubernetes  
+- **Autoscaling (HPA)** sur une application PHP-Apache  
+- **Load Balancing** avec **MetalLB**  
 
----
-
-## 📖 Documentation
-
-- [Pré-requis Proxmox](docs/00-prerequis.md)
-- [Installation Kubernetes](docs/01-install-k8s.md)
-- [Déploiements (Nginx + MetalLB)](docs/02-deploiements.md)
-- [Monitoring avec Helm](docs/03-monitoring.md)
-- [Metrics Server](docs/04-metrics-server.md)
+L’objectif est de mettre en place une plateforme de monitoring et d’observation complète, capable d’autoscaler dynamiquement en fonction des ressources consommées.
 
 ---
 
-## 📂 Structure
-
-- `docs/` → Guides détaillés étape par étape  
-- `manifests/` → Manifests Kubernetes (YAML) prêts à appliquer  
-- `scripts/` → Scripts shell pour automatiser les installations  
+## 📂 Structure du projet
+```
+.
+├── README.md                # Ce guide
+├── docs/                    # Documentation étape par étape
+│   ├── 00-prerequis.md
+│   ├── 01-install-k8s.md
+│   ├── 02-deploiements.md
+│   ├── 03-monitoring.md
+│   ├── 04-metrics-server.md
+│   └── 05-hpa-grafana.md
+├── manifests/               # Manifests Kubernetes
+│   ├── metallb-config.yaml
+│   └── hpa_php_apache.json
+└── scripts/                 # Scripts d’installation
+    ├── setup-master.sh
+    └── setup-worker.sh
+```
 
 ---
 
-## ⚙️ Exemple de ressources VM
-
-| Rôle        | vCPU | RAM     | Disque   | IP             |
-|-------------|------|---------|----------|----------------|
-| k8s-master  | 2    | 4–6 GiB | 20–40 GiB| 192.168.1.100  |
-| k8s-worker1 | 2    | 4 GiB   | 20 GiB   | 192.168.1.101  |
-| k8s-worker2 | 2    | 4 GiB   | 20 GiB   | 192.168.1.102  |
+## ⚙️ Prérequis
+- Machines ou VM avec Linux (Ubuntu/Debian recommandé)  
+- Kubernetes (via `kubeadm`, voir docs)  
+- `kubectl` installé et configuré  
+- Accès root/sudo  
+- Accès réseau entre master et workers  
 
 ---
 
-## 🚧 Notes
+## 🚀 Installation
 
-- Les IP sont des exemples, adapte-les à ton réseau.  
-- Avant les grosses étapes, prends des snapshots Proxmox.  
-- Les fichiers `manifests/` sont conçus pour être appliqués tels quels :  
+### 1. Préparer le cluster
+Sur le **master** :
+```bash
+bash scripts/setup-master.sh
+```
 
+Sur chaque **worker** :
+```bash
+bash scripts/setup-worker.sh
+```
+
+⚠️ Le script master fournit la commande `kubeadm join` à exécuter sur les workers.
+
+---
+
+### 2. Installer MetalLB
 ```bash
 kubectl apply -f manifests/metallb-config.yaml
-kubectl apply -f manifests/metrics-server.yaml
 ```
+
+---
+
+### 3. Déployer le monitoring
+Suivre la documentation : [`docs/03-monitoring.md`](docs/03-monitoring.md)  
+
+Cela installe **Prometheus** et **Grafana**.  
+
+Par défaut :  
+- Grafana est exposé sur le **LoadBalancer** défini par MetalLB  
+- Identifiants par défaut : `admin / admin` (changer immédiatement)
+
+---
+
+### 4. Installer Metrics Server
+```bash
+kubectl apply -f <fichiers-metrics-server>
+```
+(voir [`docs/04-metrics-server.md`](docs/04-metrics-server.md))
+
+---
+
+### 5. Autoscaling avec HPA
+Exemple : PHP-Apache autoscalé avec Metrics Server :  
+```bash
+kubectl apply -f manifests/hpa_php_apache.json
+```
+
+Vous pouvez tester le scaling avec un **stress test** (ex: `ab` ou `wrk`).
+
+---
+
+## 📊 Visualisation
+- **Grafana** : tableaux de bord pour observer CPU, mémoire, pods, etc.  
+- **Prometheus** : collecte des métriques Kubernetes  
+- **HPA** : ajuste automatiquement le nombre de pods  
+
+---
+
+## 📖 Documentation détaillée
+Retrouvez toutes les étapes dans le dossier [`docs/`](docs/).  
+- [00 - Prérequis](docs/00-prerequis.md)  
+- [01 - Installation du cluster Kubernetes](docs/01-install-k8s.md)  
+- [02 - Déploiements d’applications](docs/02-deploiements.md)  
+- [03 - Mise en place du monitoring](docs/03-monitoring.md)  
+- [04 - Configuration du metrics-server](docs/04-metrics-server.md)  
+- [05 - HPA et dashboards Grafana](docs/05-hpa-grafana.md)  
+
+---
+
+💡 Avec ce projet, vous obtenez un cluster Kubernetes complet, observé et capable de s’autoscaler en fonction de la charge !  
