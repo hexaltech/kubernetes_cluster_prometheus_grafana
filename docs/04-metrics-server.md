@@ -197,7 +197,7 @@ kubectl apply -f metrics-server.yaml
 2. **Éditer le déploiement pour ajouter des options**
 
 ```bash
-kubectl edit deployment metrics-server -n kube-system
+KUBE_EDITOR="nano" kubectl edit deployment metrics-server -n kube-system
 ```
 
 > Permet de modifier les arguments du conteneur (ex : `--kubelet-insecure-tls`, `--kubelet-preferred-address-types`).
