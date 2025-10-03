@@ -1,3 +1,4 @@
+# metrics-server.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -10,13 +11,11 @@ metadata:
   name: system:metrics-server
 rules:
 - apiGroups: [""]
-  resources: ["pods", "nodes", "nodes/stats", "namespaces"]
+  resources: ["pods", "nodes", "nodes/stats", "namespaces", "configmaps"]
+  resourceNames: ["extension-apiserver-authentication"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["metrics.k8s.io"]
   resources: ["pods", "nodes"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["nodes/stats"]
   verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -44,6 +43,11 @@ spec:
   selector:
     matchLabels:
       k8s-app: metrics-server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -52,20 +56,63 @@ spec:
       serviceAccountName: metrics-server
       containers:
       - name: metrics-server
-        image: k8s.gcr.io/metrics-server/metrics-server:v0.5.2
+        image: registry.k8s.io/metrics-server/metrics-server:v0.8.0
         imagePullPolicy: IfNotPresent
         args:
         - --cert-dir=/tmp
-        - --secure-port=4443
+        - --secure-port=10250
+        - --kubelet-preferred-address-types=InternalIP,Hostname,ExternalIP
+        - --kubelet-use-node-status-port
         - --kubelet-insecure-tls
-        - --kubelet-preferred-address-types=InternalIP
         - --metric-resolution=15s
         ports:
-        - containerPort: 4443
-          name: main-port
+        - containerPort: 10250
+          name: https
           protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /livez
+            port: https
+            scheme: HTTPS
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: https
+            scheme: HTTPS
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 1
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-dir
+      volumes:
+      - name: tmp-dir
+        emptyDir: {}
+      nodeSelector:
+        kubernetes.io/os: linux
+      priorityClassName: system-cluster-critical
       restartPolicy: Always
       dnsPolicy: ClusterFirst
+      terminationGracePeriodSeconds: 30
 ---
 apiVersion: v1
 kind: Service
@@ -77,4 +124,4 @@ spec:
     k8s-app: metrics-server
   ports:
   - port: 443
-    targetPort: 4443
+    targetPort: 10250
