@@ -22,6 +22,8 @@ swapoff -a
 ```bash
 hostnamectl set-hostname k8s-master
 cat > /etc/hosts <<EOF
+127.0.0.1   localhost
+::1         localhost
 192.168.1.100 k8s-master
 192.168.1.101 k8s-worker1
 192.168.1.102 k8s-worker2
@@ -33,6 +35,8 @@ EOF
 ```bash
 hostnamectl set-hostname k8s-worker1
 cat > /etc/hosts <<EOF
+127.0.0.1   localhost
+::1         localhost
 192.168.1.100 k8s-master
 192.168.1.101 k8s-worker1
 192.168.1.102 k8s-worker2
@@ -44,6 +48,8 @@ EOF
 ```bash
 hostnamectl set-hostname k8s-worker2
 cat > /etc/hosts <<EOF
+127.0.0.1   localhost
+::1         localhost
 192.168.1.100 k8s-master
 192.168.1.101 k8s-worker1
 192.168.1.102 k8s-worker2
