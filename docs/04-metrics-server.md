@@ -1,12 +1,50 @@
-# Metrics Server Installation et Nettoyage
+# Metrics Server pour Kubernetes
 
-Ce document explique comment installer le Metrics Server sur Kubernetes et comment supprimer toutes les ressources liées pour repartir d'une base propre.
+Ce document décrit l'installation et la configuration du **Metrics Server** dans un cluster Kubernetes, ainsi que la procédure de nettoyage complet si nécessaire.
 
 ---
 
-## Installation Metrics Server
+## 1. Nettoyage complet de Metrics Server
 
-Fichier `metrics-server.yaml` pour installer Metrics Server v0.8.0 :
+Cette étape permet de repartir sur une base propre en supprimant tous les objets liés à Metrics Server.
+
+```bash
+# Supprimer les pods
+kubectl delete pod -n kube-system -l k8s-app=metrics-server
+
+# Supprimer le déploiement
+kubectl delete deployment metrics-server -n kube-system
+
+# Supprimer le service
+kubectl delete service metrics-server -n kube-system
+
+# Supprimer le ServiceAccount
+kubectl delete serviceaccount metrics-server -n kube-system
+
+# Supprimer le ClusterRole et le ClusterRoleBinding
+kubectl delete clusterrole system:metrics-server
+kubectl delete clusterrolebinding system:metrics-server
+
+# Supprimer les ClusterRoleBindings additionnels si présents
+kubectl delete clusterrolebinding metrics-server-auth
+kubectl delete clusterrolebinding metrics-server:system:auth-delegator
+
+# Vérifier qu'il ne reste aucun pod ni API Service Metrics Server
+kubectl get pods -n kube-system -l k8s-app=metrics-server
+kubectl get apiservice | grep metrics
+```
+
+Après exécution, tu devrais obtenir :
+
+```
+No resources found in kube-system namespace.
+```
+
+---
+
+## 2. Installation propre de Metrics Server
+
+### Fichier YAML `metrics-server.yaml`
 
 ```yaml
 apiVersion: v1
@@ -134,40 +172,44 @@ spec:
     targetPort: 10250
 ```
 
-### Commandes utiles
+### Application du YAML
 
 ```bash
-# Appliquer le YAML
 kubectl apply -f metrics-server.yaml
+```
 
-# Redémarrer le déploiement si besoin
-kubectl rollout restart deployment metrics-server -n kube-system
+### Vérification
 
-# Vérifier les pods
+```bash
 kubectl get pods -n kube-system -l k8s-app=metrics-server
-
-# Vérifier l'API
 kubectl get apiservice | grep metrics
-
-# Tester les métriques
 kubectl top nodes
 kubectl top pods --all-namespaces
 ```
 
+Si tout est correct, le Metrics Server doit être `READY` et l’API Metrics disponible.
+
 ---
 
-## Nettoyage complet de Metrics Server
-
-Pour repartir sur une base propre et supprimer toutes les ressources liées à Metrics Server :
+## 3. ClusterRoleBindings additionnels (si nécessaire)
 
 ```bash
-kubectl delete deployment metrics-server -n kube-system
-kubectl delete service metrics-server -n kube-system
-kubectl delete serviceaccount metrics-server -n kube-system
-kubectl delete clusterrole system:metrics-server
-kubectl delete clusterrolebinding system:metrics-server
-kubectl delete clusterrolebinding metrics-server-auth
-kubectl delete clusterrolebinding metrics-server:system:auth-delegator
+kubectl create clusterrolebinding metrics-server-auth \
+  --clusterrole=system:metrics-server \
+  --serviceaccount=kube-system:metrics-server \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create clusterrolebinding metrics-server:system:auth-delegator \
+  --clusterrole=system:auth-delegator \
+  --serviceaccount=kube-system:metrics-server
 ```
 
-Ensuite, tu peux réinstaller proprement avec le YAML ci-dessus.
+---
+
+## 4. Redémarrage du déploiement (si modification des arguments)
+
+```bash
+kubectl rollout restart deployment metrics-server -n kube-system
+```
+
+Ensuite, revérifier que les pods sont `READY` et que l’API fonctionne correctement.
