@@ -72,5 +72,5 @@ while sleep 0.01; do wget -q -O- http://php-apache; done
 
 ## 6️⃣ Fichier JSON du dashboard
 
-Le fichier JSON complet est disponible dans `dashboard/hpa_php_apache.json`.
+Le fichier JSON complet est disponible dans `manifests/hpa_php_apache.json`.
 
