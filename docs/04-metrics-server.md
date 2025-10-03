@@ -1,4 +1,4 @@
-# Metrics Server
+# Metrics-server-deployment.yaml
 
 Ce document décrit l'installation et la configuration du **Metrics Server** dans un cluster Kubernetes.
 
